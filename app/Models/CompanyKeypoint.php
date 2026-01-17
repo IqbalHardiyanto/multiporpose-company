@@ -11,7 +11,7 @@ class CompanyKeypoint extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'company_about_id',
         'keypoint',
-        'company_about_id'
     ];
 }

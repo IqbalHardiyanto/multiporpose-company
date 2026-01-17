@@ -32,11 +32,11 @@
                             </h3>
                         </div>
                         <div class="hidden md:flex flex-row items-center gap-x-3">
-                            <a href="{{ route('admin.clients.edit', $about) }}"
+                            <a href="{{ route('admin.clients.edit', $client) }}"
                                 class="font-bold py-4 px-6 bg-indigo-700 text-white rounded-full">
                                 Edit
                             </a>
-                            <form action="{{ route('admin.clients.destroy', $about) }}" method="POST">
+                            <form action="{{ route('admin.clients.destroy', $client) }}" method="POST">
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="font-bold py-4 px-6 bg-red-700 text-white rounded-full">

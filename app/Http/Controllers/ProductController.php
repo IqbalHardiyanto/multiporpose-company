@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreProductRequest;
 use App\Models\Product;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProductController extends Controller
 {
@@ -14,6 +16,7 @@ class ProductController extends Controller
     public function index()
     {
         $products = Product::orderByDesc('id')->paginate(10);
+
         return view('admin.products.index', compact('products'));
     }
 
@@ -32,6 +35,18 @@ class ProductController extends Controller
     public function store(StoreProductRequest $request)
     {
         //
+        DB::transaction(function () use ($request) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('thumbnail')) {
+                $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+                $validated['thumbnail'] = $thumbnailPath;
+            }
+
+            $newDataProduct = Product::create($validated);
+        });
+
+        return redirect()->route('admin.products.index');
     }
 
     /**

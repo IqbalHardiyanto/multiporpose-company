@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreClientRequest;
 use App\Models\ProjectClient;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class ProjectClientController extends Controller
 {
@@ -14,6 +16,7 @@ class ProjectClientController extends Controller
     public function index()
     {
         $clients = ProjectClient::orderByDesc('id')->paginate(10);
+
         return view('admin.clients.index', compact('clients'));
     }
 
@@ -32,6 +35,23 @@ class ProjectClientController extends Controller
     public function store(StoreClientRequest $request)
     {
         //
+        DB::transaction(function () use ($request) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('avatar')) {
+                $avatarPath = $request->file('avatar')->store('avatars', 'public');
+                $validated['avatar'] = $avatarPath;
+            }
+
+            if ($request->hasFile('logo')) {
+                $logoPath = $request->file('logo')->store('logos', 'public');
+                $validated['logo'] = $logoPath;
+            }
+
+            $newDataClient = ProjectClient::create($validated);
+        });
+
+        return redirect()->route('admin.clients.index');
     }
 
     /**

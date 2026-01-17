@@ -33,7 +33,6 @@ class CompanyAboutController extends Controller
      */
     public function store(StoreAboutRequest $request)
     {
-        //
         DB::transaction(function () use ($request) {
             $validated = $request->validated();
 
@@ -43,9 +42,17 @@ class CompanyAboutController extends Controller
             }
 
             $newAboutRecord = CompanyAbout::create($validated);
+
+            if (! empty($validated['keypoints'])) {
+                foreach ($validated['keypoints'] as $keypoint) {
+                    $newAboutRecord->keypoints()->create([
+                        'keypoint' => $keypoint,
+                    ]);
+                }
+            }
         });
 
-        return redirect()->route('admin.abouts.index');
+        return redirect()->route('admin.abouts.index')->with('success', 'About created successfully');
     }
 
     /**

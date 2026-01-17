@@ -34,7 +34,7 @@ class CompanyStatisticController extends Controller
      */
     public function store(StoreStatisticRequest $request)
     {
-        //
+        // closure-base transaction
 
         DB::transaction(function () use ($request) {
             $validated = $request->validated();
