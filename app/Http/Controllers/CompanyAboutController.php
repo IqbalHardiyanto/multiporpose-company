@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreAboutRequest;
+use App\Http\Requests\UpdateAboutRequest;
 use App\Models\CompanyAbout;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class CompanyAboutController extends Controller
@@ -66,24 +66,60 @@ class CompanyAboutController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(CompanyAbout $companyAbout)
+    public function edit(CompanyAbout $about)
     {
         //
+        return view('admin.abouts.edit', compact('about'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CompanyAbout $companyAbout)
+    public function update(UpdateAboutRequest $request, CompanyAbout $about)
     {
         //
+        DB::transaction(function () use ($request, $about) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('thumbnail')) {
+                // Delete old thumbnail if exists
+                if ($about->thumbnail) {
+                    Storage::disk('public')->delete($about->thumbnail);
+                }
+
+                $imagePath = $request->file('thumbnail')->store('thumbnails', 'public');
+                $validated['thumbnail'] = $imagePath;
+            }
+
+            $about->update($validated);
+
+            // Update keypoints
+            if (isset($validated['keypoints'])) {
+                // Delete existing keypoints
+                $about->keypoints()->delete();
+
+                // Create new keypoints
+                foreach ($validated['keypoints'] as $keypoint) {
+                    $about->keypoints()->create([
+                        'keypoint' => $keypoint,
+                    ]);
+                }
+            }
+        });
+
+        return redirect()->route('admin.abouts.index');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CompanyAbout $companyAbout)
+    public function destroy(CompanyAbout $about)
     {
         //
+        DB::transaction(function () use ($about) {
+            $about->delete();
+        });
+
+        return redirect()->route('admin.abouts.index');
     }
 }

@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
+use App\Http\Requests\UpdateProductRequest;
 use App\Models\Product;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -63,14 +63,32 @@ class ProductController extends Controller
     public function edit(Product $product)
     {
         //
+        return view('admin.products.edit', compact('product'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, Product $product)
+    public function update(UpdateProductRequest $request, Product $product)
     {
         //
+        DB::transaction(function () use ($request, $product) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('thumbnail')) {
+                // Delete old thumbnail if exists
+                if ($product->thumbnail) {
+                    Storage::disk('public')->delete($product->thumbnail);
+                }
+
+                $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+                $validated['thumbnail'] = $thumbnailPath;
+            }
+
+            $product->update($validated);
+        });
+
+        return redirect()->route('admin.products.index');
     }
 
     /**
@@ -79,5 +97,8 @@ class ProductController extends Controller
     public function destroy(Product $product)
     {
         //
+        DB::transaction(function () use ($product) {
+            $product->delete();
+        });
     }
 }

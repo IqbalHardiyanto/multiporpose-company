@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreStatisticRequest;
+use App\Http\Requests\UpdateStatisticRequest;
 use App\Models\CompanyStatistic;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -61,24 +61,47 @@ class CompanyStatisticController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(CompanyStatistic $companyStatistic)
+    public function edit(CompanyStatistic $statistic)
     {
         //
+        return view('admin.statistics.edit', compact('statistic'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, CompanyStatistic $companyStatistic)
+    public function update(UpdateStatisticRequest $request, CompanyStatistic $statistic)
     {
         //
+        DB::transaction(function () use ($request, $statistic) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('icon')) {
+                // // Delete old icon if exists
+                if ($statistic->icon) {
+                    Storage::disk('public')->delete($statistic->icon);
+                }
+
+                $iconPath = $request->file('icon')->store('icons', 'public');
+                $validated['icon'] = $iconPath;
+            }
+
+            $statistic->update($validated);
+        });
+
+        return redirect()->route('admin.statistics.index');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(CompanyStatistic $companyStatistic)
+    public function destroy(CompanyStatistic $statistic)
     {
         //
+        DB::transaction(function () use ($statistic) {
+            $statistic->delete();
+        });
+
+        return redirect()->route('admin.statistics.index');
     }
 }

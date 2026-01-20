@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StorePrincipleRequest;
+use App\Http\Requests\UpdatePrincipleRequest;
 use App\Models\OurPrinciple;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -63,24 +63,53 @@ class OurPrincipleController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(OurPrinciple $ourPrinciple)
+    public function edit(OurPrinciple $principle)
     {
         //
+        return view('admin.principles.edit', compact('principle'));
     }
 
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, OurPrinciple $ourPrinciple)
+    public function update(UpdatePrincipleRequest $request, OurPrinciple $principle)
     {
         //
+        DB::transaction(function () use ($request, $principle) {
+            $validated = $request->validated();
+
+            if ($request->hasFile('icon')) {
+                // Delete old icon
+                Storage::disk('public')->delete($principle->icon);
+
+                $iconPath = $request->file('icon')->store('icons', 'public');
+                $validated['icon'] = $iconPath;
+            }
+
+            if ($request->hasFile('thumbnail')) {
+                // Delete old thumbnail
+                Storage::disk('public')->delete($principle->thumbnail);
+
+                $thumbnailPath = $request->file('thumbnail')->store('thumbnails', 'public');
+                $validated['thumbnail'] = $thumbnailPath;
+            }
+
+            $principle->update($validated);
+        });
+
+        return redirect()->route('admin.principles.index');
     }
 
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(OurPrinciple $ourPrinciple)
+    public function destroy(OurPrinciple $principle)
     {
         //
+        DB::transaction(function () use ($principle) {
+            $principle->delete();
+        });
+
+        return redirect()->route('admin.principles.index');
     }
 }
